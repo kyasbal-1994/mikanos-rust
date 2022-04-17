@@ -13,8 +13,7 @@ run: $(DISK_IMAGE_LOCATION) ovmf/OVMF_CODE.fd ovmf/OVMF_VARS.fd
 		-drive if=pflash,format=raw,file=./ovmf/OVMF_VARS.fd \
 		-drive if=none,id=drive0,format=raw,file=$(DISK_IMAGE_LOCATION) \
 		-device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-		-device virtio-blk-pci,drive=drive0 \
-		-serial mon:stdio
+		-device virtio-blk-pci,drive=drive0
 
 $(DISK_IMAGE_LOCATION): $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
 	qemu-img create -f raw $(DISK_IMAGE_LOCATION) $(DISK_IMAGE_SIZE)
@@ -31,10 +30,10 @@ $(DISK_IMAGE_LOCATION): $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
 .PHONY: all
 all: $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
 
-$(BOOTLOADER_LOCATION):
+$(BOOTLOADER_LOCATION): ./bootloader/src/*.rs ./bootloader/Cargo.toml ./bootloader/.cargo/*
 	cd ./bootloader && cargo build
 
-$(KERNEL_LOCATION):
+$(KERNEL_LOCATION): ./kernel/src/*.rs ./kernel/Cargo.toml ./kernel/.cargo/* ./kernel/x86_64-unknown-none-mikanos-rust.json
 	cd ./kernel && cargo build
 
 ovmf/OVMF_CODE.fd:
