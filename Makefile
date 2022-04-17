@@ -14,7 +14,7 @@ run: $(DISK_IMAGE_LOCATION) ovmf/OVMF_CODE.fd ovmf/OVMF_VARS.fd
 		-drive if=none,id=drive0,format=raw,file=$(DISK_IMAGE_LOCATION) \
 		-device isa-debug-exit,iobase=0xf4,iosize=0x04 \
 		-device virtio-blk-pci,drive=drive0 \
-		-serial stdio
+#		-serial stdio
 
 $(DISK_IMAGE_LOCATION): $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
 	qemu-img create -f raw $(DISK_IMAGE_LOCATION) $(DISK_IMAGE_SIZE)

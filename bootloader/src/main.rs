@@ -16,10 +16,14 @@ extern crate uefi_services;
 
 use core::fmt::Write;
 use core::{mem, slice};
+use core::arch::asm;
+use core::borrow::Borrow;
 use goblin::elf;
 use uefi::prelude::*;
 use uefi::table::boot::{AllocateType, MemoryDescriptor, MemoryType};
 use log::info;
+use shared::framebuffer;
+use uefi::proto::console::gop::{GraphicsOutput,PixelFormat};
 
 const EFI_PAGE_SIZE: usize = 0x1000;
 
@@ -31,14 +35,17 @@ fn efi_main(_image: Handle,mut st: SystemTable<Boot>)-> Status {
 
     let kernel_entry = load_kernel("kernel.elf",_image,&st);
     info!("kernel entry: {}",kernel_entry);
-    let entry_point: extern "sysv64" fn() = unsafe {
+    let fb = get_frame_buffer(st.boot_services());
+    let entry_point: extern "sysv64" fn(&framebuffer::FrameBuffer) = unsafe {
         mem::transmute(kernel_entry)
     };
 
-    entry_point();
+    entry_point(&fb);
     info!("After kernel call");
     loop{
-
+        unsafe {
+            asm!("hlt");
+        }
     }
 }
 
@@ -84,6 +91,25 @@ fn load_elf(src: &[u8], st: &SystemTable<Boot>)->usize{
         dest[fsize..].fill(0);
     }
     elf.entry as usize
+}
+
+fn get_frame_buffer(bs: &BootServices)->framebuffer::FrameBuffer {
+    let mut gopCell = bs.locate_protocol::<GraphicsOutput>().unwrap();
+    let mut gop = unsafe{ &mut *gopCell.get() };
+    let mut  ptr = gop.frame_buffer().as_mut_ptr();
+    framebuffer::FrameBuffer{
+        framebuffer: gop.frame_buffer().as_mut_ptr(),
+        stride: gop.current_mode_info().stride() as u32,
+        resolution: (
+            gop.current_mode_info().resolution().0 as u32,
+            gop.current_mode_info().resolution().1 as u32
+            ),
+        format: match gop.current_mode_info().pixel_format() {
+            PixelFormat::Rgb=>framebuffer::PixelFormat::Rgb,
+            PixelFormat::Bgr=>framebuffer::PixelFormat::Bgr,
+            f=>panic!("Unsupported pixel format :{:?}",f)
+        }
+    }
 }
 
 fn dump_memory_map(st: &SystemTable<Boot>) {
