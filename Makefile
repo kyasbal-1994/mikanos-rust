@@ -1,6 +1,6 @@
 MOUNT_POINT=./mnt
 BOOTLOADER_LOCATION=./bootloader/target/x86_64-unknown-uefi/debug/bootloader.efi
-KERNEL_LOCATION=./kernel/target/x86_64-unknown-none-mikanos-rust/debug/kernel
+KERNEL_LOCATION=./kernel/target/x86_64-unknown-none-mikanos-rust/debug/kernel.elf
 DISK_IMAGE_LOCATION=./build.img
 DISK_IMAGE_SIZE=200M
 MEMORY_SIZE=1G
@@ -13,7 +13,8 @@ run: $(DISK_IMAGE_LOCATION) ovmf/OVMF_CODE.fd ovmf/OVMF_VARS.fd
 		-drive if=pflash,format=raw,file=./ovmf/OVMF_VARS.fd \
 		-drive if=none,id=drive0,format=raw,file=$(DISK_IMAGE_LOCATION) \
 		-device isa-debug-exit,iobase=0xf4,iosize=0x04 \
-		-device virtio-blk-pci,drive=drive0
+		-device virtio-blk-pci,drive=drive0 \
+		-serial stdio
 
 $(DISK_IMAGE_LOCATION): $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
 	qemu-img create -f raw $(DISK_IMAGE_LOCATION) $(DISK_IMAGE_SIZE)
@@ -27,8 +28,8 @@ $(DISK_IMAGE_LOCATION): $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
 	sudo umount $(MOUNT_POINT)
 
 
-.PHONY: all
-all: $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
+.PHONY: build
+build: $(BOOTLOADER_LOCATION) $(KERNEL_LOCATION)
 
 $(BOOTLOADER_LOCATION): ./bootloader/src/*.rs ./bootloader/Cargo.toml ./bootloader/.cargo/*
 	cd ./bootloader && cargo build
