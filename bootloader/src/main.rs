@@ -40,6 +40,7 @@ fn efi_main(_image: Handle,mut st: SystemTable<Boot>)-> Status {
         mem::transmute(kernel_entry)
     };
 
+    info!("Calling kernel");
     entry_point(&fb);
     info!("After kernel call");
     loop{

@@ -1,11 +1,11 @@
 #![no_std]
 #![no_main]
-#![no_mangle]
 
 use core::arch::asm;
 use core::slice;
 use shared::framebuffer;
 
+#[no_mangle]
 pub extern "sysv64" fn kernel_main(fb:&framebuffer::FrameBuffer) {
     let mut buf = unsafe {
         slice::from_raw_parts_mut(fb.framebuffer ,(fb.stride*fb.resolution.1*4) as usize)
