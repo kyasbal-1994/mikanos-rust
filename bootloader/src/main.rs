@@ -57,6 +57,9 @@ fn load_kernel(path: &str, image: Handle, st: &SystemTable<Boot>)->usize {
     load_elf(&buf,st)
 }
 
+/// Loads ELF binary to the specified location in header
+/// # Arguments
+/// * `src` - A reference to the byte slice containing actual ELF binary
 fn load_elf(src: &[u8], st: &SystemTable<Boot>)->usize{
     let elf = elf::Elf::parse(src).unwrap();
 
@@ -66,13 +69,13 @@ fn load_elf(src: &[u8], st: &SystemTable<Boot>)->usize{
 
         info!("Program header: {} {} {} {}",elf::program_header::pt_to_str(ph.p_type),ph.p_offset,ph.p_vaddr,ph.p_memsz);
 
-        if ph.p_type != elf::program_header::PT_LOAD {
+        if ph.p_type != elf::program_header::PT_LOAD { // If program header was not PT_LOAD, boot loader no need to put the binary in memory
             continue;
         }
-        dest_start = dest_start.min(ph.p_vaddr as usize);
-        dest_end = dest_end.max(ph.p_vaddr + ph.p_memsz);
+        dest_start = dest_start.min(ph.p_vaddr as usize); // Calculate the first memory address of the PT_LOAD binary section over the all binary sections
+        dest_end = dest_end.max(ph.p_vaddr + ph.p_memsz); // Calculate the last memory address of the PT_LOAD binary section over the all binary sections
     }
-
+    // Allocate memory. Allocation size should be specified by page count not a just byte length
     st.boot_services().allocate_pages(AllocateType::Address(dest_start),MemoryType::LOADER_DATA,(dest_end as usize - dest_start as usize + EFI_PAGE_SIZE - 1) / EFI_PAGE_SIZE);
 
     for ph in elf.program_headers.iter() {
@@ -80,10 +83,13 @@ fn load_elf(src: &[u8], st: &SystemTable<Boot>)->usize{
             continue;
         }
 
-        let ofs = ph.p_offset as usize;
-        let fsize = ph.p_filesz as usize;
-        let msize = ph.p_memsz as usize;
+        let ofs = ph.p_offset as usize; // offset of src binary
+        let fsize = ph.p_filesz as usize; // size of src binary to be written
+        let msize = ph.p_memsz as usize; // size of the dest location
 
+        // SRC  |--offset-->|<--fsize-->|
+        // DEST             |<---------msize------->|
+        //      |--vaddr-->|<--fsize-->|<--fill 0-->|
         let dest = unsafe {
             slice::from_raw_parts_mut(ph.p_vaddr as *mut u8, msize)
         };
