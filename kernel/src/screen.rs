@@ -45,6 +45,14 @@ pub trait Renderable {
         }
     }
 
+    fn write_string(&mut self,x:u32,y:u32,s:&str,color:[u8;3]){
+        let mut offset = 0;
+        for c in s.chars() {
+            self.write_char(x+offset,y,c,color);
+            offset += 8;
+        }
+    }
+
     fn write_rect(&mut self,x:u32,y:u32,w:u32,h:u32,color:[u8; 3]){
         for xp in x..(x+w) {
             for yp in y..(y+h) {

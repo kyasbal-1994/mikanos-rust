@@ -13,10 +13,7 @@ use crate::screen::Renderable;
 pub extern "sysv64" fn kernel_main(fb:&framebuffer::FrameBuffer) {
     let mut screen = screen::Screen::new(&fb);
     screen.clear([255,255,255]);
-    for i in 0..25 {
-        let c = ('A' as u8) + i;
-        screen.write_char(10* (i as u32),100,c as char,[255,0,0]);
-    }
+    screen.write_string(100,30,"HELLO WORLD!!",[255,0,255]);
     loop {
         unsafe { asm!("hlt") }
     }
