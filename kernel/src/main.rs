@@ -7,11 +7,11 @@ mod screen;
 use core::arch::asm;
 use core::slice;
 use shared::framebuffer;
-use crate::screen::Renderable;
+use crate::screen::{Renderable, Screen};
 
 #[no_mangle]
 pub extern "sysv64" fn kernel_main(fb:&framebuffer::FrameBuffer) {
-    let mut screen = screen::Screen::new(&fb);
+    let mut screen:Screen = (*fb).into();
     screen.clear([255,255,255]);
     screen.write_string(100,30,"HELLO WORLD!!",[255,0,255]);
     loop {
