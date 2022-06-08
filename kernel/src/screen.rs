@@ -4,6 +4,14 @@ use shared::framebuffer::{FrameBuffer, PixelFormat};
 
 static ASCII_FONT: &[u8; 4096] = include_bytes!("../ascii.bin");
 
+pub static mut MAIN_SCREEN: Option<Screen> = Option::None;
+
+pub fn initialize_screen(fb: &framebuffer::FrameBuffer){
+    unsafe{
+        MAIN_SCREEN = Some((*fb).into())
+    }
+}
+
 /// Represents the screen buffer directly shown to users
 /// This will be initialized with a framebuffer obtained from UEFI
 pub struct Screen{
