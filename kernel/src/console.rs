@@ -1,7 +1,14 @@
 use core::borrow::Borrow;
+use core::fmt;
 use crate::{Renderable, screen};
 
-pub struct ConsoleWrite;
+pub static mut MAIN_CONSOLE: Option<Console> = Option::None;
+
+pub fn initialize_console(){
+    unsafe {
+        MAIN_CONSOLE = Some(Console::new());
+    }
+}
 
 pub struct Console{
     size: (u32,u32),
@@ -11,8 +18,6 @@ pub struct Console{
 
 impl Console{
     pub fn new()->Self{
-        let a = ConsoleWrite;
-        let b = a.borrow();
         Self {
             size: (80,25),
             cursor: (0,0),
@@ -44,4 +49,24 @@ impl Console{
             }
         }
     }
+}
+
+#[derive(Debug)]
+pub struct ConsoleWrite;
+
+impl fmt::Write for ConsoleWrite{
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        unsafe{
+            MAIN_CONSOLE.as_mut().unwrap().put_str(s);
+        }
+        Ok(())
+    }
+}
+
+#[allow(unused_macros)]
+macro_rules! println{
+        ($( $t:tt )*) => {{
+        use core::fmt::Write;
+        writeln!(crate::console::ConsoleWrite, $( $t )*).unwrap();
+    }};
 }

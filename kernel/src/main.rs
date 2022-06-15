@@ -2,13 +2,10 @@
 #![no_main]
 
 
-extern crate alloc;
-
 mod screen;
+#[macro_use]
 mod console;
 mod pci;
-
-use alloc::string::ToString;
 use core::arch::asm;
 use core::{fmt, slice};
 use core::fmt::Arguments;
@@ -18,14 +15,12 @@ use crate::screen::{Renderable, Screen};
 #[no_mangle]
 pub extern "sysv64" fn kernel_main(fb: &framebuffer::FrameBuffer,rsdp:*const u8) {
     screen::initialize_screen(fb);
+    console::initialize_console();
     unsafe {
         screen::MAIN_SCREEN.as_mut().unwrap().clear([255, 255, 255]);
         screen::MAIN_SCREEN.as_mut().unwrap().draw_cursor(100,100,[255,0,0]);
     }
-    let mut console = console::Console::new();
-    console.put_str("HELLO WORLd\nhoge\nhoge");
-    // console.put_str((rsdp as u64).as_str());
-
+    println!("hoge {:#016x}",rsdp as u64);
     loop {
         unsafe { asm!("hlt") }
     }
