@@ -1,4 +1,8 @@
+use core::borrow::Borrow;
 use crate::{Renderable, screen};
+
+pub struct ConsoleWrite;
+
 pub struct Console{
     size: (u32,u32),
     cursor: (u32,u32),
@@ -7,6 +11,8 @@ pub struct Console{
 
 impl Console{
     pub fn new()->Self{
+        let a = ConsoleWrite;
+        let b = a.borrow();
         Self {
             size: (80,25),
             cursor: (0,0),
@@ -16,7 +22,7 @@ impl Console{
 
     fn put_char_direct(&self,x:u32,y:u32,c: char){
         unsafe{
-            screen::MAIN_SCREEN.as_mut().unwrap().write_char(
+            screen::MAIN_SCREEN.as_mut().unwrap().draw_char(
                 x,y,c,self.color
             )
         }
